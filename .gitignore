@@ -1,0 +1,6 @@
+*.log 
+*.csr
+.app-role
+*.crt 
+*.key
+*.srl

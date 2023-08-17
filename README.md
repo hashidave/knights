@@ -4,6 +4,7 @@ Vault features such as AppRole authentication, static and dynamic secrets, PKI, 
 
 To use the repo it is necessary to start a dev instance of vault with
 
+./setup.sh  (this will start vault server dev)
 
 Create a root CA certificate in the knights_CA folder using openssh
 

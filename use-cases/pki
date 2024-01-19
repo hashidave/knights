@@ -1,0 +1,47 @@
+#!/bin/bash
+
+export VAULT_ADDR=http://127.0.0.1:8200
+unset VAULT_NAMESPACE
+
+APP_TOKEN=$VAULT_TOKEN
+
+###################################################################################
+###################################################################################
+#######                   PKI
+
+read -p $'\e[96mPress <Enter> to request a certificate for knights.com'
+echo -e "\e[33m-----------------------"
+#vault write pki/issue/knights.com common_name=www.knights.com
+read -r -d '' PAYLOAD<<-EOF 
+{
+    "common_name": "www.knights.com",
+    "ttl": "7m"
+}
+EOF
+
+CERTINFO=$(curl -S -s --header "X-Vault-Token: $APP_TOKEN" --request POST --data "$PAYLOAD"  \
+    http://127.0.0.1:8200/v1/pki/issue/knights.com) 
+echo -e "\e[33m-----------------------"
+echo $CERTINFO | jq
+
+echo -e "\e[33m-----------------------"
+
+read -p $'\e[96mPress <Enter> to revoke the certificate for knights.com'
+echo -e "\e[33m-----------------------"
+
+read SERIAL_NUMBER <<< $(echo $CERTINFO | jq -r '.data.serial_number')
+echo "Revoking Cert w/ Serial # : $SERIAL_NUMBER"
+
+read -r -d '' PAYLOAD<<-EOF 
+{
+  "serial_number": "$SERIAL_NUMBER"
+}
+EOF
+curl -S -s --header "X-Vault-Token: $APP_TOKEN" --request POST --data "$PAYLOAD" \
+    http://127.0.0.1:8200/v1/pki/revoke | jq
+
+read -p $'\e[96mPress <Enter> to view the audit log'
+echo -e "\e[33m-----------------------"
+
+### Examine the Audit Log for a Bit
+grep "pki" ../vault-audit.log | tail -n 5 | jq

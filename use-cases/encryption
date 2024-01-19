@@ -1,0 +1,14 @@
+#!/bin/bash
+
+export VAULT_ADDR=http://127.0.0.1:8200
+unset VAULT_NAMESPACE
+PLAINTEXT="My Secret Data"
+
+echo "Encrypting plaintext: $PLAINTEXT"
+echo -e "\e[33m-----------------------"
+vault write transit/encrypt/my-key plaintext=$(echo $PLAINTEXT | base64)
+
+
+echo -e "\e[33m-----------------------"
+echo "decrypt using 'vault write -field=plaintext transit/decrypt/my-key ciphertext=xyz | base64 --decode'"
+

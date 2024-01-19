@@ -1,0 +1,2 @@
+unset VAULT_NAMESPACE
+export VAULT_ADDR=http://127.0.0.1:8200

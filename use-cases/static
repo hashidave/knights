@@ -1,0 +1,91 @@
+#!/bin/bash
+
+export VAULT_ADDR=http://127.0.0.1:8200
+unset VAULT_NAMESPACE
+
+APP_TOKEN=$VAULT_TOKEN
+
+
+###################################################################################
+###################################################################################
+#######                   Static Secret Management
+ echo -e "\e[33m-----------------------"
+ read -p $'\e[96mPress <Enter> to see static secret "creds"'
+
+echo -e "\e[33m-----------------------"
+echo "    Static Secrets   "
+echo -e "\e[33m-----------------------"
+curl -S -s --header "X-Vault-Token: $APP_TOKEN"  \
+     http://127.0.0.1:8200/v1/secret/data/creds | jq
+
+
+
+# #vault kv metadata get -mount=secret creds
+# curl -S -s --header "X-Vault-Token: $APP_TOKEN" http://127.0.0.1:8200/v1/secret/metadata/creds | jq
+
+read -p $'\e[96mPress <Enter> to createa a new static secret version of "creds"'
+echo -e "\e[33m-----------------------"
+#Store a new secret version
+#vault kv put -mount=secret -field=version creds passcode=N0tS3cure number=Transylvania-6-5000
+read -r -d '' PAYLOAD<<-EOF 
+{
+  "data": {
+    "passcode=": "N0tS3cure",
+    "number": "Transylvania-6-5000"
+  }
+}
+EOF
+
+curl -S -s --header "X-Vault-Token: $APP_TOKEN" -X PUT --data "$PAYLOAD" \
+     http://127.0.0.1:8200/v1/secret/data/creds | jq
+
+
+
+# # rotate the static secret
+# read -p $'\e[96mPress <Enter> to rotate "creds"'
+# echo -e "\e[33m-----------------------"
+# #vault read -format=json sys/policies/password/example/generate 
+# NEW_SECRET=$(curl -S -s --header "X-Vault-Token: $APP_TOKEN" \
+#     http://127.0.0.1:8200/v1/sys/policies/password/example/generate | jq)
+
+# TODO:  Set the new secret    
+
+# read -p $'\e[96mPress <Enter> to update "creds"'
+# echo -e "\e[33m-----------------------"
+
+# #vault kv put -mount=secret  creds passcode=$(vault read -field=password sys/policies/password/example/generate) number=1800-flowers
+# read -r -d '' PAYLOAD<<-EOF 
+# {
+#   "data": {
+#     "passcode=": "N0tS3cure",
+#     "number": "Transylvania-6-5000"
+#   }
+# }
+# EOF
+
+# curl -S -s --header "X-Vault-Token: $APP_TOKEN" -X PUT --data "$PAYLOAD"  \
+#     http://127.0.0.1:8200/v1/secret/data/creds | jq
+
+
+
+read -p $'\e[96mPress <Enter> to read "creds"'
+echo -e "\e[33m-----------------------"
+curl -S -s --header "X-Vault-Token: $APP_TOKEN"  \
+     http://127.0.0.1:8200/v1/secret/data/creds | jq
+
+
+read -p $'\e[96mPress <Enter> to see metatdata for "creds"'
+echo -e "\e[33m-----------------------"
+
+# check the metadata now
+#vault kv metadata get -mount=secret creds
+curl -S -s --header "X-Vault-Token: $APP_TOKEN" http://127.0.0.1:8200/v1/secret/metadata/creds | jq
+
+
+
+read -p $'\e[96mPress <Enter> to see audit data for "creds"'
+echo -e "\e[33m-----------------------"
+#### Examine the Audit Log for a Bit
+grep "creds" ../vault-audit.log | tail -n 1 | jq
+
+

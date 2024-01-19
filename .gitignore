@@ -4,3 +4,5 @@
 *.crt 
 *.key
 *.srl
+*.pem
+*.tfstate

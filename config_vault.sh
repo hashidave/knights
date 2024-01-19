@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# all the secrets in this file are garbage and are for example only.
+
+
 vault audit enable file file_path=$PWD/vault-audit.log
 
 # onboard a couple of static secrets
@@ -48,12 +51,15 @@ vault write pki/roles/knights.com \
 # initialize postgres engine
 vault secrets enable database
 
+USERNAME="vaultuser"
+PW="SwampThing34"
+
 vault write database/config/postgresql \
      plugin_name=postgresql-database-plugin \
      connection_url="postgresql://{{username}}:{{password}}@localhost:5432/postgres?sslmode=disable" \
      allowed_roles=pg_readonly,pg_readwrite\
-     username="vaultuser" \
-     password="SwampThing34"
+     username=$USERNAME \
+     password=$PW
 
 # this would rotate the postgres root credential but my dev vault is ephemeral & my DB is not so
 # I don't want to break it. :)
@@ -75,6 +81,7 @@ vault write database/roles/pg_readwrite \
         default_ttl=10m \
         max_ttl=1h
 
+# user name template so we can tell where the user came from
 vault write database/config/postgresql username_template="ACME-{{.RoleName}}-{{unix_time}}-{{random 8}}"
 
 vault write sys/policies/password/example policy=@example_policy.hcl
@@ -194,3 +201,47 @@ vault write identity/entity-alias name="chuck" \
 vault write identity/group name="auditors" \
        member_entity_ids=$ENTITY
  
+
+
+##########################################################################
+##########################################################################
+##########################################################################
+# initialize aws engine
+vault secrets enable -path=aws aws
+
+vault write aws/config/root \
+    access_key=$AWS_ACCESS_KEY_ID \
+    secret_key=$AWS_SECRET_ACCESS_KEY \
+    region=us-east-1
+
+# NOTE:  Vault supports rotating the secret key.
+
+
+# Credentials vended by Vault will have the policy attached here
+vault write aws/roles/my-role \
+        credential_type=iam_user \
+        policy_document=-<<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Stmt1426528957000",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:*"
+      ],
+      "Resource": [
+        "*"
+      ]
+    }
+  ]
+}
+EOF
+
+##########################################################################
+##########################################################################
+##########################################################################
+# initialize Transit
+vault secrets enable -path=transit transit
+
+vault write -f transit/keys/my-key

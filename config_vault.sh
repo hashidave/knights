@@ -7,13 +7,14 @@ vault audit enable file file_path=$PWD/vault-audit.log
 
 # onboard a couple of static secrets
 # kv is enabled at secret by default on non-HCP
- #vault secrets enable -version=2 -path=secret kv 
+vault secrets enable -version=2 -path=kv2  kv
 
- vault kv metadata put -mount=secret -max-versions=5 -delete-version-after=30m creds
- vault kv put -mount=secret creds passcode=my-long-passcode number=8675309
- vault kv put -mount=secret team/audit passcode=Money$$ number=7654
- vault kv put -mount=secret team/eng passcode=GearHead number=3210
- vault kv put -mount=secret team/admin passcode=MyKidsNameHere number=2468
+
+ vault kv metadata put -mount=kv2 -max-versions=5 -delete-version-after=30m creds
+ vault kv put -mount=kv2 creds passcode=my-long-passcode number=8675309
+ vault kv put -mount=kv2 team/audit passcode=Money$$ number=7654
+ vault kv put -mount=kv2 team/eng passcode=GearHead number=3210
+ vault kv put -mount=kv2 team/admin passcode=MyKidsNameHere number=2468
 
 
 ##########################################################################
@@ -129,7 +130,7 @@ path "secret/data/team/eng" {
 EOF
 
 vault write identity/group name="engineers" \
-     policies="team-eng" \
+     policies="default,team-eng" \
      metadata=team="Engineering" \
      metadata=region="North America"
 ################################################
@@ -157,11 +158,12 @@ vault write identity/group name="auditors" \
 
 ## Make some users and tie them to entities
 vault auth enable userpass
-
+#vault auth tune -audit-non-hmac-response-keys password userpass
+#vault auth tune -audit-non-hmac-request-keys error userpass
 # grab the accessor
 ACCESSOR=`vault auth list -format=json | jq -r '.["userpass/"].accessor'`
 
-vault write auth/userpass/users/alice password="training" 
+vault write auth/userpass/users/alice password="admins" 
 ENTITY=`vault write -field=id  identity/entity name="alice" \
      metadata=organization="ACME Inc." \
      metadata=team="Admins"` 
@@ -175,7 +177,7 @@ vault write identity/group name="admins" \
        member_entity_ids=$ENTITY
 
 ######################################################
-vault write auth/userpass/users/bob password="training" 
+vault write auth/userpass/users/bob password="engineering" 
 ENTITY=`vault write -field=id identity/entity name="bob" \
      metadata=organization="ACME Inc." \
      metadata=team="Engineering"`

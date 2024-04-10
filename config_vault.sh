@@ -124,7 +124,7 @@ vault secrets tune -audit-non-hmac-response-keys=data  database/
 
 # Make some groups and policies for those groups
 vault policy write team-eng -<<EOF
-path "secret/data/team/eng" {
+path "kv2/data/team/eng" {
   capabilities = [ "create", "read", "update", "delete"]
 }
 EOF

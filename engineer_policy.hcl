@@ -1,3 +1,3 @@
-path "secret/data/eng" {
-  capabilities = ["create", "update"]
+path "kv2/metadata/* {
+  capabilities = ["list"]
 }

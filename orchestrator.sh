@@ -5,7 +5,7 @@
 # It presents a system-level identity that Vault can consume to then
 # release approle secrets that are passed to the various applications
 
-APP_SECRET=`vault write -wrap-ttl=60s -force -field=wrapping_token auth/approle/role/knights-ro/secret-id`
+APP_SECRET=`vault write -wrap-ttl=60s -force -field=wrapping_token auth/approle/role/knights-ro/secret-id metadata="env=dev"` 
 #echo "wrapped secret in controller: $APP_SECRET"
 
 ## kick off our app passing in the wrapped token

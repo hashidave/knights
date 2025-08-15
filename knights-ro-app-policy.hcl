@@ -23,3 +23,15 @@ path "pki/issue/knights.com" {
 path "pki/revoke" {
   capabilities = ["sudo", "create", "update"]
 }
+
+path "identity/oidc/token/knights-dev"{
+  capabilities = ["read"]
+}
+
+path "auth/token/create-orphan"{
+  capabilities = ["create", "update"]
+}
+
+path "auth/token/lookup"{
+  capabilities = ["read"]
+}

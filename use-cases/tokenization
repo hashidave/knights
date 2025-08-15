@@ -1,0 +1,24 @@
+#!/bin/bash
+
+export VAULT_ADDR=http://127.0.0.1:8200
+unset VAULT_NAMESPACE
+PLAINTEXT="1234-5678-9101-1121"
+
+echo "Tokenizing: $PLAINTEXT"
+echo -e "\e[33m-----------------------"
+TOKEN_VALUE=$(vault write transform/encode/mobile-pay value=$PLAINTEXT \
+    transformation=credit-card \
+    ttl=8h \
+    metadata="Organization=HashiCorp" \
+    metadata="Purpose=Travel" \
+    metadata="Type=Visa" -format=json | jq -r '.data | .encoded_value') \
+    && echo encoded_value: $TOKEN_VALUE
+
+
+echo -e "\e[33m-----------------------"
+echo "token metadata"
+vault write transform/metadata/mobile-pay value=$TOKEN_VALUE transformation=credit-card
+
+
+echo -e "\e[33m-----------------------"
+echo "reverse the token using 'vault write transform/decode/mobile-pay transformation=credit-card value=$TOKEN_VALUE"

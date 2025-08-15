@@ -1,0 +1,52 @@
+#!/bin/bash
+jwt-decode() {
+  jq -R 'split(".") |.[0:2] | map(gsub("-"; "+") | gsub("_"; "/") | gsub("%3D"; "=") | @base64d) | map(fromjson)' <<< $1
+}
+
+
+
+# this works through the use-case of a pipeline creating a jwt for a single app (entity) with varying metadata
+# It relies of having an entity with both an approle & a jwt auth alias.
+# The pipeline will use the approle credentials to authenticate to vault & request a 
+# JWT from the identity secrets engine. 
+# The approle token as created has a very short lifespan & use is restricted to the pipeline host and
+# Vault policy should restrict that approle from doing anything other than fetching a jwt
+
+# Get the approle and the secret (in my demo, the approle is in a file)
+APP_ROLE=$(cat .app-role)  
+echo "approle:  $APP_ROLE"
+
+
+APP_SECRET=`vault write -force -field=secret_id auth/approle/role/knights-ro/secret-id`
+echo "app secret :  $APP_SECRET"
+
+export VAULT_TOKEN=`vault write -field=token auth/approle/login role_id=$APP_ROLE secret_id=$APP_SECRET`
+echo "token:  $VAULT_TOKEN"
+#vault token lookup $VAULT_TOKEN
+
+
+
+
+# Now use the app token to request a JWT
+SIGNED_JWT=`vault read -field=token identity/oidc/token/knights-dev`
+echo "JWT: $SIGNED_JWT"
+
+
+# extract the jwt contents for display
+jwt-decode $SIGNED_JWT
+
+# log on with vault
+export VAULT_TOKEN=`vault write -field=token auth/jwt/login role=knights-dev jwt=$SIGNED_JWT`
+echo -n $VAULT_TOKEN
+
+vault token lookup
+
+# Request a database credential. 
+vault read database/creds/pg_readonly
+
+# now request an orphan token
+
+export VAULT_TOKEN=`vault write -field=token /auth/token/create-orphan ttl=24h`
+
+# finally, log in with the orphan
+vault token lookup

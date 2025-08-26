@@ -391,7 +391,7 @@ vault auth enable cert
 
 ## Create a signing cert for auth
 # Generate a CSR for the intermediate Cert
-#vault write -field=csr pki/intermediate/generate/internal common_name="Vault Identity Authority" \
+##vault write -field=csr pki/intermediate/generate/internal common_name="Vault Identity Authority" \
 #        ip_sans="127.0.0.1" ttl=60d > vault_int.csr
 
 ##sign the request with our fake root CA
@@ -404,8 +404,11 @@ openssl x509 -in vault_int.crt -out vault_int.pem -outform PEM
 vault write auth/cert/certs/web \
       display_name=web \
       policies=web,prod \
-      certificate=@vault_identity_signing.pem \
+      certificate=@vault_int.pem \
       ttl=3600
+
+
+
 
 
 
@@ -419,6 +422,6 @@ vault write -format=json pki/issue/identity-cert common_name=”identity-cert”
 
 
 # Present the cert for authentication
-vault login -method=cert -client-cert=@identity-certificate.pem -client-key=@identity-certificate-private-key.pem
+vault login -method=cert -client-cert=identity-certificate.pem -client-key=identity-certificate-private-key.pem
 
 
